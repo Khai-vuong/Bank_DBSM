@@ -61,6 +61,71 @@ BEGIN
     RETURN COALESCE(user_info, JSON_OBJECT('error', 'Invalid username or password'));
 END$
 
+-- generate new customer code
+DROP FUNCTION GenerateCustomerCode;
+CREATE FUNCTION GenerateCustomerCode()
+RETURNS VARCHAR(10)
+DETERMINISTIC
+READS SQL DATA
+BEGIN
+    DECLARE new_code VARCHAR(10);
+    DECLARE max_code INT;
+
+    -- Extract the maximum numerical part of the existing CustomerCode
+    SELECT IFNULL(MAX(CAST(SUBSTRING(CustomerCode, 2) AS UNSIGNED)), 0) INTO max_code
+    FROM Customer;
+
+    -- Increment the maximum code by 1 and format it as 'CXXX'
+    SET new_code = CONCAT('C', LPAD(max_code + 1, 3, '0'));
+
+    RETURN new_code;
+END$
+
+-- Create new customer
+DROP PROCEDURE AddCustome
+CREATE PROCEDURE AddCustomer(
+    IN p_FirstName VARCHAR(30),
+    IN p_LastName VARCHAR(30),
+    IN p_HomeAddress VARCHAR(255),
+    IN p_OfficeAddress VARCHAR(255),
+    IN p_Email VARCHAR(100),
+    IN p_Phones TEXT
+)
+BEGIN
+    DECLARE newCustomerCode VARCHAR(10);
+    DECLARE phone VARCHAR(20);
+    DECLARE pos INT;
+
+    -- Generate a new customer code
+    SET newCustomerCode = GenerateCustomerCode();
+
+    -- Insert the new customer into the Customer table
+    INSERT INTO Customer (CustomerCode, FirstName, LastName, HomeAddress, OfficeAddress, Email)
+    VALUES (newCustomerCode, p_FirstName, p_LastName, p_HomeAddress, p_OfficeAddress, p_Email);
+
+    -- Process the phone numbers (comma-separated)
+    WHILE LENGTH(p_Phones) > 0 DO
+        -- Find the position of the next comma
+        SET pos = LOCATE(',', p_Phones);
+
+        -- Extract the phone number
+        IF pos = 0 THEN
+            SET phone = p_Phones; -- Last phone number
+            SET p_Phones = '';
+        ELSE
+            SET phone = SUBSTRING(p_Phones, 1, pos - 1);
+            SET p_Phones = SUBSTRING(p_Phones, pos + 1);
+        END IF;
+
+        -- Insert the phone number into the CustomerPhoneNumber table
+        INSERT INTO CustomerPhoneNumber (PhoneNumber, CustomerCode)
+        VALUES (phone, newCustomerCode);
+    END WHILE;
+
+    -- Return a success message
+    SELECT CONCAT('New customer added with CustomerCode: ', newCustomerCode) AS Message;
+END$
+
 -- Function to create account
 DROP PROCEDURE AddNewAccount;
 CREATE PROCEDURE AddNewAccount(

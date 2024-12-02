@@ -1,6 +1,6 @@
 /** @format */
 
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { AppSidebar } from "../components/AppSidebar";
 import { BranchesPage } from "./BranchesPage";
 import { AccountsPage } from "./AccountsPage";
@@ -14,6 +14,15 @@ export function ManagerDashboard() {
 			<AppSidebar />
 			<main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100">
 				<Routes>
+					<Route
+						path="/"
+						element={
+							<Navigate
+								to="branches"
+								replace
+							/>
+						}
+					/>
 					<Route
 						path="branches"
 						element={<BranchesPage />}

@@ -6,7 +6,7 @@ import pool from "../config/db.js";
 const router = express.Router();
 
 //get customer by name
-router.get("/information", async (req, res) => {
+router.get("/", async (req, res) => {
 	const { name } = req.query;
 
 	let sql = `
@@ -55,7 +55,7 @@ router.get("/information", async (req, res) => {
 			ON acc.AccountNumber = acc_d.AccountNumber
 				GROUP BY acc.CustomerCode
 		) AS a ON c.CustomerCode = a.CustomerCode
-		WHERE BINARY CONCAT(c.FirstName, ' ', c.LastName) LIKE ?;
+		WHERE CONCAT(c.FirstName, ' ', c.LastName) LIKE ?;
   `;
 
 	let params = [`%${name}%` || ""];
@@ -245,16 +245,6 @@ router.get("/information/all", async (req, res) => {
 
 	try {
 		const [rows] = await pool.query(sql);
-		res.json(rows);
-	} catch (error) {
-		res.status(500).json({ error: error.message });
-	}
-});
-
-// Get all customers
-router.get("/", async (req, res) => {
-	try {
-		const [rows] = await pool.query("SELECT * FROM Customer");
 		res.json(rows);
 	} catch (error) {
 		res.status(500).json({ error: error.message });

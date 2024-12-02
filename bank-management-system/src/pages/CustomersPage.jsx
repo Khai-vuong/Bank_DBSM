@@ -16,7 +16,7 @@ export function CustomersPage() {
 		data: customers,
 		loading,
 		error,
-	} = useDataFetching(`/api/customers/information?name=${query}`, isShowing);
+	} = useDataFetching(`/api/customers?name=${query}`, isShowing);
 
 	const handleSearch = (event) => {
 		event.preventDefault();

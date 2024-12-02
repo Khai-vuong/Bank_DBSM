@@ -1,9 +1,8 @@
 USE bank_database;
 
-DELIMITER $	
-
+DELIMITER $
 -- Register user
-DROP PROCEDURE RegisterUser;
+DROP PROCEDURE IF EXISTS RegisterUser;
 CREATE PROCEDURE RegisterUser(
     IN p_Username VARCHAR(50), 
     IN p_Password VARCHAR(50), 
@@ -33,9 +32,11 @@ BEGIN
         IF(p_Role = 'Manager', NULL, p_CustomerCode) -- CustomerCode is NULL for Managers
     );
 END$
+DELIMITER ;
 
+DELIMITER $
 -- Login
-DROP FUNCTION LoginUser;
+DROP FUNCTION IF EXISTS LoginUser;
 CREATE FUNCTION LoginUser(
     p_Username VARCHAR(50), 
     p_Password VARCHAR(50)
@@ -60,9 +61,11 @@ BEGIN
     -- Return user information or a JSON-like error message
     RETURN COALESCE(user_info, JSON_OBJECT('error', 'Invalid username or password'));
 END$
+DELIMITER ;
 
+DELIMITER $
 -- generate new customer code
-DROP FUNCTION GenerateCustomerCode;
+DROP FUNCTION IF EXISTS GenerateCustomerCode;
 CREATE FUNCTION GenerateCustomerCode()
 RETURNS VARCHAR(10)
 DETERMINISTIC
@@ -80,9 +83,11 @@ BEGIN
 
     RETURN new_code;
 END$
+DELIMITER ;
 
+DELIMITER $
 -- Create new customer
-DROP PROCEDURE AddCustome
+DROP PROCEDURE IF EXISTS AddCustome;
 CREATE PROCEDURE AddCustomer(
     IN p_FirstName VARCHAR(30),
     IN p_LastName VARCHAR(30),
@@ -125,9 +130,11 @@ BEGIN
     -- Return a success message
     SELECT CONCAT('New customer added with CustomerCode: ', newCustomerCode) AS Message;
 END$
+DELIMITER ;
 
+DELIMITER $
 -- Function to create account
-DROP PROCEDURE AddNewAccount;
+DROP PROCEDURE IF EXISTS AddNewAccount;
 CREATE PROCEDURE AddNewAccount(
     IN account_number CHAR(10),
     IN customer_code VARCHAR(10),
@@ -155,9 +162,11 @@ BEGIN
             VALUES (account_number, loan_take_date, balance, interest_rate);
     END CASE;
 END$
+DELIMITER ;
 
+DELIMITER $
 -- Function to Calculate Total Balance for Each Account Type of a Customer
-DROP FUNCTION CalculateTotalBalanceByCustomer;
+DROP FUNCTION IF EXISTS CalculateTotalBalanceByCustomer;
 CREATE FUNCTION CalculateTotalBalanceByCustomer(customer_id VARCHAR(10))
 RETURNS JSON
 DETERMINISTIC
@@ -201,9 +210,11 @@ BEGIN
         'loan', total_loan
     );
 END$
+DELIMITER ;
 
+DELIMITER $
 -- Procedure to Sort Employees by Decreasing Number of Customers They Serve in a Period
-DROP PROCEDURE SortEmployeesByCustomers;
+DROP PROCEDURE IF EXISTS SortEmployeesByCustomers;
 CREATE PROCEDURE SortEmployeesByCustomers(
     IN start_date DATE, 
     IN end_date DATE
@@ -241,5 +252,4 @@ BEGIN
     ORDER BY 
         CustomerCount DESC;
 END$
-
 DELIMITER ;

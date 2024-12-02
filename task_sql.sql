@@ -71,11 +71,11 @@ WHERE
     
 -- Decrease interest rate to 10% for all savings accounts whose opening date is from 01/09/2020
 UPDATE SavingsAccount
-SET InterestRate = 10.00
+SET InterestRate = InterestRate * 1.1
 WHERE OpenDate >= '2020-09-01';
 
 -- Calculate Total Balance for Each Account Type of a Customer
 SELECT CalculateTotalBalanceByCustomer('C001') AS TotalBalance;
 
-
+-- Sort the employee in decreasing number of customers he/she takes care in a period of time
 CALL SortEmployeesByCustomers('2022-01-01', '2023-01-01');

@@ -12,7 +12,8 @@ CREATE TABLE Customer
     HomeAddress					VARCHAR(255)				NOT NULL,
     OfficeAddress				VARCHAR(255),
     Email						VARCHAR(100)	UNIQUE 		NOT NULL,
-    ServeEmployeeCode			VARCHAR(10)
+    ServeEmployeeCode			VARCHAR(10),
+    ServeDate					DATE
 );
 
 CREATE TABLE CustomerPhoneNumber
@@ -26,7 +27,8 @@ CREATE TABLE CustomerPhoneNumber
 -- Account
 CREATE TABLE Account
 (
-	AccountNumber				CHAR(10)								PRIMARY KEY,
+    AccountCode                 VARCHAR(10)                             PRIMARY KEY,
+	AccountNumber				CHAR(10)								UNIQUE,
     CustomerCode				VARCHAR(10),
     AccountType					ENUM('Checking', 'Savings', 'Loan')		NOT NULL,
     FOREIGN KEY (CustomerCode) REFERENCES Customer(CustomerCode)
@@ -35,30 +37,30 @@ CREATE TABLE Account
 -- Savings Account
 CREATE TABLE SavingsAccount
 (
-	AccountNumber				CHAR(10)					PRIMARY KEY,
+	AccountCode				    VARCHAR(10)					PRIMARY KEY,
     InterestRate				DECIMAL(5, 2)				NOT NULL,
     Balance						DECIMAL(15, 2)				NOT NULL,
     OpenDate					DATE 						NOT NULL,
-    FOREIGN KEY (AccountNumber) REFERENCES Account(AccountNumber)
+    FOREIGN KEY (AccountCode) REFERENCES Account(AccountCode)
 );
 
 -- Checking Account
 CREATE TABLE CheckingAccount
 (
-	AccountNumber				CHAR(10)					PRIMARY KEY,
+	AccountCode				    VARCHAR(10)					PRIMARY KEY,
     Balance						DECIMAL(15, 2)				NOT NULL,
     OpenDate					DATE 						NOT NULL,
-    FOREIGN KEY (AccountNumber) REFERENCES Account(AccountNumber)
+    FOREIGN KEY (AccountCode) REFERENCES Account(AccountCode)
 );
 
 -- Loan Account
 CREATE TABLE LoanAccount
 (
-	AccountNumber				CHAR(10)					PRIMARY KEY,
+	AccountCode				    VARCHAR(10)					PRIMARY KEY,
     LoanTakeDate				DATE 						NOT NULL,
     BalanceDue					DECIMAL(15, 2)				NOT NULL,
     InterestRate				DECIMAL(5, 2)				NOT NULL,
-    FOREIGN KEY (AccountNumber) REFERENCES Account(AccountNumber)    
+    FOREIGN KEY (AccountCode) REFERENCES Account(AccountCode)    
 );
 
 -- Tạm thời tắt kiểm tra khóa ngoại
@@ -189,12 +191,12 @@ VALUES
 ('South Branch', '2345678901'),
 ('East Branch', '1098765432');
 
-INSERT INTO Customer (CustomerCode, FirstName, LastName, HomeAddress, OfficeAddress, Email, ServeEmployeeCode)
+INSERT INTO Customer (CustomerCode, FirstName, LastName, HomeAddress, OfficeAddress, Email, ServeEmployeeCode, ServeDate)
 VALUES 
-('C001', 'Alice', 'Johnson', '123 Elm St, Springfield', '456 Oak St, Springfield', 'alice.johnson@example.com', "E001"),
-('C002', 'Bob', 'Smith', '789 Pine St, Springfield', '101 Maple St, Springfield', 'bob.smith@example.com', "E002"),
-('C003', 'Carol', 'Williams', '234 Cedar St, Springfield', '567 Birch St, Springfield', 'carol.williams@example.com', "E001"),
-('C004', 'David', 'Brown', '890 Fir St, Springfield', NULL, 'david.brown@example.com', "E004");
+('C001', 'Alice', 'Johnson', '123 Elm St, Springfield', '456 Oak St, Springfield', 'alice.johnson@example.com', "E001", '2024-06-12'),
+('C002', 'Bob', 'Smith', '789 Pine St, Springfield', '101 Maple St, Springfield', 'bob.smith@example.com', "E002", '2024-07-16'),
+('C003', 'Carol', 'Williams', '234 Cedar St, Springfield', '567 Birch St, Springfield', 'carol.williams@example.com', "E001", '2024-06-22'),
+('C004', 'David', 'Brown', '890 Fir St, Springfield', NULL, 'david.brown@example.com', "E004", '2024-05-12');
 
 INSERT INTO CustomerPhoneNumber (PhoneNumber, CustomerCode)
 VALUES 
@@ -204,29 +206,28 @@ VALUES
 ('8901234567', 'C004'),
 ('8901234561', 'C001');
 
-INSERT INTO Account (AccountNumber, CustomerCode, AccountType)
+INSERT INTO Account (AccountCode, AccountNumber, CustomerCode, AccountType)
 VALUES 
-('A001', 'C001', 'Savings'),
-('A002', 'C002', 'Checking'),
-('A003', 'C003', 'Loan'),
-('A004', 'C004', 'Savings'),
-('A005', 'C001', 'Checking');
+('A001', '0912567145', 'C001', 'Savings'),
+('A002', '1182175123', 'C002', 'Checking'),
+('A003', '2819981341', 'C003', 'Loan'),
+('A004', '0198411231', 'C004', 'Savings'),
+('A005', '7183913191', 'C001', 'Checking');
 
-INSERT INTO CheckingAccount (AccountNumber, Balance, OpenDate)
+INSERT INTO CheckingAccount (AccountCode, Balance, OpenDate)
 VALUES 
 ('A002', 5000.00, '2022-01-10'),
 ('A005', 4000.00, '2022-01-10');
 
-INSERT INTO SavingsAccount (AccountNumber, InterestRate, Balance, OpenDate)
+INSERT INTO SavingsAccount (AccountCode, InterestRate, Balance, OpenDate)
 VALUES 
 ('A001', 1.5, 2000.00, '2022-01-15'),
 ('A004', 2.0, 3000.00, '2022-02-20');
 
-INSERT INTO LoanAccount (AccountNumber, LoanTakeDate, BalanceDue, InterestRate)
+INSERT INTO LoanAccount (AccountCode, LoanTakeDate, BalanceDue, InterestRate)
 VALUES 
 ('A003', '2022-03-10', 15000.00, 3.5);
 
-DROP TABLE User;
 CREATE TABLE User (
     UserCode VARCHAR(10) PRIMARY KEY,
     Username VARCHAR(50) UNIQUE NOT NULL,

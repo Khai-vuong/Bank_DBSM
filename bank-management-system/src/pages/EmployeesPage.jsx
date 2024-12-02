@@ -1,7 +1,7 @@
 /** @format */
 
 import { useDataFetching } from "../hooks/useDataFetching";
-import { Loader2 } from "lucide-react";
+import { Loader2, Phone } from "lucide-react";
 
 export function EmployeesPage() {
 	const { data: employees, loading, error } = useDataFetching("/api/employees");
@@ -28,6 +28,28 @@ export function EmployeesPage() {
 		);
 	}
 
+	function combineEmployees(data) {
+		const result = {};
+
+		data.forEach((employee) => {
+			const { EmployeeCode, PhoneNumber, ...rest } = employee;
+
+			if (!result[EmployeeCode]) {
+				result[EmployeeCode] = { ...rest, EmployeeCode, PhoneNumbers: [] };
+			}
+
+			// Add the phone number if it's not already in the list
+			if (!result[EmployeeCode].PhoneNumbers.includes(PhoneNumber)) {
+				result[EmployeeCode].PhoneNumbers.push(PhoneNumber);
+			}
+		});
+
+		// Convert the result object into an array
+		return Object.values(result);
+	}
+
+	console.log(combineEmployees(employees));
+
 	return (
 		<div className="p-6">
 			<h2 className="text-2xl font-bold mb-4">Employees</h2>
@@ -43,8 +65,13 @@ export function EmployeesPage() {
 						</tr>
 					</thead>
 					<tbody>
-						{employees.map((employee) => (
-							<tr key={employee.EmployeeCode} className="hover:bg-gray-100 hover:cursor-pointer">
+						{combineEmployees(employees).map((employee) => (
+							<tr
+								key={employee.EmployeeCode}
+								className="hover:bg-gray-100 hover:cursor-pointer"
+								onClick={() => {
+									window.location.href = `/manager/employees/${employee.EmployeeCode}`;
+								}}>
 								<td className="py-2 px-4 border-b">{employee.EmployeeCode}</td>
 								<td className="py-2 px-4 border-b">{employee.FirstName}</td>
 								<td className="py-2 px-4 border-b">{employee.LastName}</td>
@@ -55,7 +82,10 @@ export function EmployeesPage() {
 					</tbody>
 				</table>
 			) : (
-				<p>No employees found.</p>
+				<div className="p-6">
+					<h2 className="text-2xl font-bold mb-4">Employees</h2>
+					<p className="text-gray-600">No employees found.</p>
+				</div>
 			)}
 		</div>
 	);

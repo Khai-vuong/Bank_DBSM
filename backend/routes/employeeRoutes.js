@@ -8,7 +8,14 @@ const router = express.Router();
 // Get all employees
 router.get("/", async (req, res) => {
 	try {
-		const [rows] = await pool.query("SELECT * FROM Employee");
+		const sql = `
+			SELECT e.*, ep.PhoneNumber
+			FROM employee e
+			JOIN employeephone ep
+			ON e.EmployeeCode = ep.EmployeeCode
+		`;
+
+		const [rows] = await pool.query(sql);
 		res.json(rows);
 	} catch (error) {
 		res.status(500).json({ error: error.message });
@@ -18,14 +25,19 @@ router.get("/", async (req, res) => {
 // Get a single employee
 router.get("/:code", async (req, res) => {
 	try {
-		const [rows] = await pool.query(
-			"SELECT * FROM Employee WHERE EmployeeCode = ?",
-			[req.params.code],
-		);
+		const sql = `
+			SELECT e.*, ep.PhoneNumber
+			FROM employee e
+			JOIN employeephone ep
+			ON e.EmployeeCode = ep.EmployeeCode
+			WHERE e.EmployeeCode = ?
+		`;
+
+		const [rows] = await pool.query(sql, [req.params.code]);
 		if (rows.length === 0) {
 			return res.status(404).json({ message: "Employee not found" });
 		}
-		res.json(rows[0]);
+		res.json(rows);
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}

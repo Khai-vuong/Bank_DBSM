@@ -1,18 +1,18 @@
 /** @format */
 
-import { useParams } from "react-router";
+import { useParams, useNavigate } from "react-router";
 import { useDataFetching } from "../hooks/useDataFetching.js";
 import { Loader2 } from "lucide-react";
-import { PaperClipIcon } from "@heroicons/react/20/solid";
 
 export function CustomerDetailPage() {
+	const navigate = useNavigate();
 	let params = useParams();
 	console.log(params.code);
 	const {
 		data: customer,
 		loading,
 		error,
-	} = useDataFetching(`/api/customers/information/${params.code}`);
+	} = useDataFetching(`/api/customers/${params.code}`);
 
 	if (loading) {
 		return (
@@ -35,6 +35,11 @@ export function CustomerDetailPage() {
 			</div>
 		);
 	}
+
+	const formattedDate = (isoDate) =>
+		new Date(isoDate).toLocaleDateString("en-GB");
+
+	console.log(customer);
 
 	return (
 		<>
@@ -60,7 +65,9 @@ export function CustomerDetailPage() {
 											Full name
 										</dt>
 										<dd className="mt-1 text-sm/6 text-gray-700 sm:col-span-2 sm:mt-0">
-											{customer.FirstName || customer.LastName ? customer.FirstName + " " + customer.LastName : "None"}
+											{customer.FirstName || customer.LastName
+												? customer.FirstName + " " + customer.LastName
+												: "None"}
 										</dd>
 									</div>
 									<div className="px-4 py-6 sm:grid sm:grid-cols-5 sm:gap-4 sm:px-0">
@@ -108,7 +115,14 @@ export function CustomerDetailPage() {
 												? customer.AccountList.map((account) => (
 														<div
 															key={account.AccountNumber}
-															className="shadow p-3 first:mt-0 mt-4 rounded">
+															className="shadow p-3 first:mt-0 mt-4 rounded hover:-translate-y-[4px] duration-300 hover:cursor-pointer"
+															onClick={() =>
+																navigate(
+																	`/manager/accounts/${account.AccountType.toLowerCase()}/${
+																		account.AccountCode
+																	}`,
+																)
+															}>
 															<p className="font-bold">
 																Number: {account.AccountNumber}
 															</p>
@@ -125,6 +139,26 @@ export function CustomerDetailPage() {
 														</div>
 												  ))
 												: "None"}
+										</dd>
+									</div>
+									<div className="px-4 py-6 sm:grid sm:grid-cols-5 sm:gap-4 sm:px-0">
+										<dt className="text-sm/6 font-medium text-gray-900 sm:col-span-1">
+											Served by
+										</dt>
+										<dd
+											className="mt-1 text-sm/6 text-gray-700 sm:col-span-4 sm:mt-0 hover:cursor-pointer hover:underline"
+											onClick={() =>
+												navigate(
+													`/manager/employees/${customer.ServeEmployeeCode}`,
+												)
+											}>
+											{customer.ServeEmployeeName || "None"}
+										</dd>
+										<dt className="text-sm/6 font-medium text-gray-900">
+											From
+										</dt>
+										<dd className="mt-1 text-sm/6 text-gray-700 sm:col-span-4 sm:mt-0">
+											{formattedDate(customer.ServeDate) || "None"}
 										</dd>
 									</div>
 								</dl>

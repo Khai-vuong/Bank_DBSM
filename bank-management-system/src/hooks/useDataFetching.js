@@ -8,6 +8,8 @@ export function useDataFetching(url, ...args) {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
 
+	console.log(url, ...args);
+
 	useEffect(() => {
 		axios
 			.get(url)
@@ -28,7 +30,7 @@ export function useDataFetching(url, ...args) {
 			.finally(() => {
 				setLoading(false);
 			});
-	}, [url, args]);
+	}, [url, ...args]);
 
 	return { data, loading, error };
 }

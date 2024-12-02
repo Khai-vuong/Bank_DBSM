@@ -16,16 +16,69 @@ router.get("/", async (req, res) => {
 });
 
 // Get a single account
-router.get("/:number", async (req, res) => {
+router.get("/savings/:number", async (req, res) => {
 	try {
-		const [rows] = await pool.query(
-			"SELECT * FROM Account WHERE AccountNumber = ?",
-			[req.params.number],
-		);
+		const sql = `
+			SELECT ac.AccountNumber, sac.*, c.*
+			FROM account ac
+			JOIN savingsaccount sac
+			ON ac.AccountCode = sac.AccountCode
+			JOIN customer c
+			ON c.CustomerCode = ac.CustomerCode
+			WHERE ac.AccountCode = ?
+		`;
+
+		const [rows] = await pool.query(sql, [req.params.number]);
 		if (rows.length === 0) {
 			return res.status(404).json({ message: "Account not found" });
 		}
-		res.json(rows[0]);
+		res.json(rows);
+	} catch (error) {
+		res.status(500).json({ error: error.message });
+	}
+});
+
+// Get a single account
+router.get("/checking/:code", async (req, res) => {
+	try {
+		const sql = `
+			SELECT ac.AccountNumber, cac.*, c.*
+			FROM account ac
+			JOIN checkingaccount cac
+			ON ac.AccountCode = cac.AccountCode
+			JOIN customer c
+			ON c.CustomerCode = ac.CustomerCode
+			WHERE ac.AccountCode = ?
+		`;
+
+		const [rows] = await pool.query(sql, [req.params.code]);
+		if (rows.length === 0) {
+			return res.status(404).json({ message: "Account not found" });
+		}
+		res.json(rows);
+	} catch (error) {
+		res.status(500).json({ error: error.message });
+	}
+});
+
+// Get a single account
+router.get("/loan/:number", async (req, res) => {
+	try {
+		const sql = `
+			SELECT ac.AccountNumber, lac.*, c.*
+			FROM account ac
+			JOIN loanaccount lac
+			ON ac.AccountCode = lac.AccountCode
+			JOIN customer c
+			ON c.CustomerCode = ac.CustomerCode
+			WHERE ac.AccountCode = ?
+		`;
+
+		const [rows] = await pool.query(sql, [req.params.number]);
+		if (rows.length === 0) {
+			return res.status(404).json({ message: "Account not found" });
+		}
+		res.json(rows);
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}

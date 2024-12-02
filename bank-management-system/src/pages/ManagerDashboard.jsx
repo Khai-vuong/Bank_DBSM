@@ -4,9 +4,11 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { AppSidebar } from "../components/AppSidebar";
 import { BranchesPage } from "./BranchesPage";
 import { AccountsPage } from "./AccountsPage";
+import { AccountDetailPage } from "./AccountDetailPage";
 import { CustomersPage } from "./CustomersPage";
 import { CustomerDetailPage } from "./CustomerDetailPage";
 import { EmployeesPage } from "./EmployeesPage";
+import { EmployeeDetailPage } from "./EmployeeDetailPage";
 
 export function ManagerDashboard() {
 	return (
@@ -32,6 +34,10 @@ export function ManagerDashboard() {
 						element={<AccountsPage />}
 					/>
 					<Route
+						path="accounts/:type/:number"
+						element={<AccountDetailPage />}
+					/>
+					<Route
 						path="customers"
 						element={<CustomersPage />}
 					/>
@@ -42,6 +48,10 @@ export function ManagerDashboard() {
 					<Route
 						path="employees"
 						element={<EmployeesPage />}
+					/>
+					<Route
+						path="employees/:code"
+						element={<EmployeeDetailPage />}
 					/>
 				</Routes>
 			</main>

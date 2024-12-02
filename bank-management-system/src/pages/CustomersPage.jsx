@@ -48,6 +48,8 @@ export function CustomersPage() {
 		);
 	}
 
+	console.log("Customers:", customers);
+
 	return (
 		<>
 			{isShowing ? (

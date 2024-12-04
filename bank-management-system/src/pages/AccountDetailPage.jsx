@@ -54,23 +54,25 @@ export function AccountDetailPage() {
 				data[field] = account[0][field];
 			});
 
-			try {
-				axios
-					.put(`/api/accounts/${params.type}/${params.code}`, {
-						...data,
-						[key]: newValue,
-					})
-					.then((response) => {
-						console.log("Account updated successfully:", response.data);
-					})
-					.catch((error) => {
-						console.error("There was an error updating the account!", error);
-					});
+			if (confirm("Are you sure you want to save the changes?")) {
+				try {
+					axios
+						.put(`/api/accounts/${params.type}/${params.code}`, {
+							...data,
+							[key]: newValue,
+						})
+						.then((response) => {
+							console.log("Account updated successfully:", response.data);
+						})
+						.catch((error) => {
+							console.error("There was an error updating the account!", error);
+						});
 
-				window.location.reload();
-			} catch (error) {
-				console.error("Error updating account:", error);
-				alert("Failed to update account. Please try again.");
+					navigate(0);
+				} catch (error) {
+					console.error("Error updating account:", error);
+					alert("Failed to update account. Please try again.");
+				}
 			}
 		},
 		[editedValues, params.type, params.code, account, editableFields],

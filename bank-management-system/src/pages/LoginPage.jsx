@@ -1,33 +1,23 @@
 /** @format */
 
-import axios from "axios";
 import { useState } from "react";
-import PropTypes from "prop-types";
-import { useNavigate } from "react-router-dom";
+import { useAuth } from "../hooks/auth/authContext.js";
 
-export function LoginPage({ setAuth, setUser, user }) {
+export function LoginPage() {
 	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
-
-	const navigate = useNavigate();
+	const auth = useAuth();
 
 	const handleLogin = (e) => {
 		e.preventDefault();
-		axios
-			.post("/api/sites/login", { username, password })
-			.then((response) => {
-				if (response.data) {
-					setAuth(true);
-					setUser(JSON.parse(response.data.info));
-					setUsername("");
-					setPassword("");
-					console.log(username);
-					navigate("/");
-				}
-			})
-			.catch((error) => {
-				alert(error);
-			});
+		if (!username || !password) {
+			alert("Please enter username and password.");
+			return;
+		}
+		auth.loginAction({
+			username,
+			password,
+		});
 	};
 
 	return (
@@ -76,8 +66,3 @@ export function LoginPage({ setAuth, setUser, user }) {
 		</div>
 	);
 }
-
-LoginPage.propTypes = {
-	setAuth: PropTypes.func.isRequired,
-	setUser: PropTypes.func.isRequired,
-};

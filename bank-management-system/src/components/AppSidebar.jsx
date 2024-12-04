@@ -1,7 +1,7 @@
 /** @format */
 
 import { Link } from "react-router-dom";
-import PropTypes from "prop-types";
+import { useAuth } from "../hooks/auth/authContext.js";
 import {
 	Building2,
 	Users,
@@ -22,7 +22,8 @@ const menuItems = [
 	},
 ];
 
-export function AppSidebar({ setAuth, setUser }) {
+export function AppSidebar() {
+	const auth = useAuth();
 	return (
 		<aside className="bg-gray-800 text-white w-64 min-h-screen p-4">
 			<nav className="flex flex-col h-full">
@@ -45,8 +46,7 @@ export function AppSidebar({ setAuth, setUser }) {
 					className="mt-auto bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded"
 					onClick={() => {
 						if (confirm("Are you sure you want to logout?")) {
-							setAuth(false);
-							setUser(null);
+							auth.logOut();
 						}
 					}}>
 					Logout
@@ -55,8 +55,3 @@ export function AppSidebar({ setAuth, setUser }) {
 		</aside>
 	);
 }
-
-AppSidebar.propTypes = {
-	setAuth: PropTypes.func.isRequired,
-	setUser: PropTypes.func.isRequired,
-};

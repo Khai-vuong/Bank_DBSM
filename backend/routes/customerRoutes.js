@@ -75,7 +75,8 @@ router.get("/:code", async (req, res) => {
 
 	let sql = `
 		SELECT 
-			c.*, 
+			c.*,
+			CONCAT(c.FirstName, ' ', c.LastName) AS FullName,
 			cpn.PhoneNumberList, 
 			a.AccountList, 
 			CONCAT(e.FirstName, ' ', e.LastName) AS ServeEmployeeName
@@ -221,26 +222,11 @@ router.post("/", async (req, res) => {
 
 // Update a customer
 router.put("/:code", async (req, res) => {
-	const {
-		FirstName,
-		LastName,
-		HomeAddress,
-		OfficeAddress,
-		Email,
-		ServeEmployeeCode,
-	} = req.body;
+	const { FirstName, LastName, HomeAddress, OfficeAddress, Email } = req.body;
 	try {
 		const [result] = await pool.query(
-			"UPDATE Customer SET FirstName = ?, LastName = ?, HomeAddress = ?, OfficeAddress = ?, Email = ?, ServeEmployeeCode = ? WHERE CustomerCode = ?",
-			[
-				FirstName,
-				LastName,
-				HomeAddress,
-				OfficeAddress,
-				Email,
-				ServeEmployeeCode,
-				req.params.code,
-			],
+			"UPDATE Customer SET FirstName = ?, LastName = ?, HomeAddress = ?, OfficeAddress = ?, Email = ? WHERE CustomerCode = ?",
+			[FirstName, LastName, HomeAddress, OfficeAddress, Email, req.params.code],
 		);
 		if (result.affectedRows === 0) {
 			return res.status(404).json({ message: "Customer not found" });

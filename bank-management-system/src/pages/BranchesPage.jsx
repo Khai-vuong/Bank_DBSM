@@ -16,25 +16,17 @@ export function BranchesPage() {
 			setBranchFaxes({});
 			const phones = {};
 			branches.forEach((branch) => {
-				console.log(phones);
-
 				phones[branch.BranchName] = [
 					phones[branch.BranchName],
 					branch.PhoneNumber,
 				].filter((a) => a);
-
-				console.log(phones);
 			});
 			const faxes = {};
 			branches.forEach((branch) => {
-				console.log(faxes);
-
 				faxes[branch.BranchName] = [
 					faxes[branch.BranchName],
 					branch.PhoneNumber,
 				].filter((a) => a);
-
-				console.log(faxes);
 			});
 			setBranchPhones(phones);
 			setBranchFaxes(faxes);

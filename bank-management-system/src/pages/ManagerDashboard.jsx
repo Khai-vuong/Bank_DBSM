@@ -1,7 +1,6 @@
 /** @format */
 
 import { Navigate, Route, Routes } from "react-router-dom";
-import PropTypes from "prop-types";
 import { AppSidebar } from "../components/AppSidebar";
 import { BranchesPage } from "./BranchesPage";
 import { AccountsPage } from "./AccountsPage";
@@ -15,13 +14,10 @@ import { CreateCustomerPage } from "./CreateCustomerPage";
 import { CreateEmployeePage } from "./CreateEmployeePage";
 import { EmployeeServePage } from "./EmployeeServePage";
 
-export function ManagerDashboard({ setAuth, setUser }) {
+export function ManagerDashboard() {
 	return (
 		<div className="flex h-screen bg-gray-100">
-			<AppSidebar
-				setAuth={setAuth}
-				setUser={setUser}
-			/>
+			<AppSidebar />
 			<main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100">
 				<Routes>
 					<Route
@@ -82,8 +78,3 @@ export function ManagerDashboard({ setAuth, setUser }) {
 		</div>
 	);
 }
-
-ManagerDashboard.propTypes = {
-	setAuth: PropTypes.func.isRequired,
-	setUser: PropTypes.func.isRequired,
-};

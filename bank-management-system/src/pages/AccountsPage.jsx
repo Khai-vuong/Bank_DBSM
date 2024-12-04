@@ -91,9 +91,11 @@ export function AccountsPage() {
 										deleteMode
 											? undefined
 											: () =>
-													(window.location.href = `/manager/accounts/${account.AccountType.toLowerCase()}/${
-														account.AccountCode
-													}`)
+													navigate(
+														`/manager/accounts/${account.AccountType.toLowerCase()}/${
+															account.AccountCode
+														}`,
+													)
 									}>
 									<td className="py-3 px-4 border-b">{account.AccountCode}</td>
 									<td className="py-3 px-4 border-b">

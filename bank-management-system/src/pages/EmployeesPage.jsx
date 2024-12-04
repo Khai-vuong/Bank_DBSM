@@ -125,7 +125,7 @@ export function EmployeesPage() {
 										}>
 										{employee.BranchName}
 									</td>
-									<td className="py-3 px-4 border-b">
+									<td className="border-b">
 										<button
 											className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded flex items-center"
 											onClick={(e) => {

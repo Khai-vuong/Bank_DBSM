@@ -8,7 +8,15 @@ const router = express.Router();
 // Get all branches
 router.get("/", async (req, res) => {
 	try {
-		const [rows] = await pool.query("SELECT * FROM Branch");
+		const sql = `
+			SELECT *
+			FROM Branch b
+			JOIN branchphone bp
+			ON b.BranchName = bp.BranchName
+			JOIN branchfax bf
+			ON b.BranchName = bf.BranchName	
+		`;
+		const [rows] = await pool.query(sql);
 		res.json(rows);
 	} catch (error) {
 		res.status(500).json({ error: error.message });

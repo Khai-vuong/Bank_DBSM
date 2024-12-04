@@ -1,10 +1,45 @@
 /** @format */
 
+import { useEffect, useState } from "react";
 import { useDataFetching } from "../hooks/useDataFetching";
 import { Loader2 } from "lucide-react";
 
 export function BranchesPage() {
 	const { data: branches, loading, error } = useDataFetching("/api/branches");
+
+	const [brachPhones, setBranchPhones] = useState({});
+	const [brachFaxes, setBranchFaxes] = useState({});
+
+	useEffect(() => {
+		if (branches && branches.length > 0) {
+			setBranchPhones({});
+			setBranchFaxes({});
+			const phones = {};
+			branches.forEach((branch) => {
+				console.log(phones);
+
+				phones[branch.BranchName] = [
+					phones[branch.BranchName],
+					branch.PhoneNumber,
+				].filter((a) => a);
+
+				console.log(phones);
+			});
+			const faxes = {};
+			branches.forEach((branch) => {
+				console.log(faxes);
+
+				faxes[branch.BranchName] = [
+					faxes[branch.BranchName],
+					branch.PhoneNumber,
+				].filter((a) => a);
+
+				console.log(faxes);
+			});
+			setBranchPhones(phones);
+			setBranchFaxes(faxes);
+		}
+	}, [branches]);
 
 	if (loading) {
 		return (
@@ -39,15 +74,33 @@ export function BranchesPage() {
 							<th className="py-2 px-4 border-b text-left">Address</th>
 							<th className="py-2 px-4 border-b text-left">City</th>
 							<th className="py-2 px-4 border-b text-left">Email</th>
+							<th className="py-2 px-4 border-b text-left">Phones</th>
+							<th className="py-2 px-4 border-b text-left">Faxes</th>
 						</tr>
 					</thead>
 					<tbody>
 						{branches.map((branch) => (
-							<tr key={branch.BranchName} className="hover:bg-gray-100 hover:cursor-pointer">
+							<tr
+								key={branch.BranchName}
+								className="hover:bg-gray-100 hover:cursor-pointer">
 								<td className="py-2 px-4 border-b">{branch.BranchName}</td>
 								<td className="py-2 px-4 border-b">{`${branch.AddressNo} ${branch.AddressStreet}`}</td>
 								<td className="py-2 px-4 border-b">{branch.AddressCity}</td>
 								<td className="py-2 px-4 border-b">{branch.Email}</td>
+								<td className="py-2 px-4 border-b">
+									{brachPhones[branch.BranchName]
+										? brachPhones[branch.BranchName].map((phone, index) => (
+												<div key={index}>{phone}</div>
+										  ))
+										: null}
+								</td>
+								<td className="py-2 px-4 border-b">
+									{brachFaxes[branch.BranchName]
+										? brachFaxes[branch.BranchName].map((fax, index) => (
+												<div key={index}>{fax}</div>
+										  ))
+										: null}
+								</td>
 							</tr>
 						))}
 					</tbody>

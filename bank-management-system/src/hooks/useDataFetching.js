@@ -4,9 +4,11 @@ import axios from "axios";
 import { useState, useEffect } from "react";
 
 export function useDataFetching(url, ...args) {
-	const [data, setData] = useState(null);
+	const [data, setData] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
+
+	console.log(url, ...args);
 
 	useEffect(() => {
 		axios
@@ -28,7 +30,7 @@ export function useDataFetching(url, ...args) {
 			.finally(() => {
 				setLoading(false);
 			});
-	}, [url, args]);
+	}, [url, ...args]);
 
 	return { data, loading, error };
 }

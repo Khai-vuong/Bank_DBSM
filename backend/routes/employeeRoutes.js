@@ -8,7 +8,37 @@ const router = express.Router();
 // Get all employees
 router.get("/", async (req, res) => {
 	try {
-		const [rows] = await pool.query("SELECT * FROM Employee");
+		const sql = `
+			SELECT e.*, ep.PhoneNumber
+			FROM employee e
+			JOIN employeephone ep
+			ON e.EmployeeCode = ep.EmployeeCode
+		`;
+
+		const [rows] = await pool.query(sql);
+		res.json(rows);
+	} catch (error) {
+		res.status(500).json({ error: error.message });
+	}
+});
+
+// Get serve employees
+router.get("/serve", async (req, res) => {
+	try {
+		const sql = `
+			SELECT 
+					CustomerCode,
+					CONCAT(c.FirstName, ' ', c.LastName) AS CustomerName,
+					EmployeeCode,
+					CONCAT(e.FirstName, ' ', e.LastName) AS EmployeeName,
+					BranchName,
+					ServeDate
+			FROM customer c
+			JOIN employee e
+			ON ServeEmployeeCode = EmployeeCode
+		`;
+		console.log(1);
+		const [rows] = await pool.query(sql);
 		res.json(rows);
 	} catch (error) {
 		res.status(500).json({ error: error.message });
@@ -18,14 +48,19 @@ router.get("/", async (req, res) => {
 // Get a single employee
 router.get("/:code", async (req, res) => {
 	try {
-		const [rows] = await pool.query(
-			"SELECT * FROM Employee WHERE EmployeeCode = ?",
-			[req.params.code],
-		);
+		const sql = `
+			SELECT e.*, ep.PhoneNumber
+			FROM employee e
+			JOIN employeephone ep
+			ON e.EmployeeCode = ep.EmployeeCode
+			WHERE e.EmployeeCode = ?
+		`;
+
+		const [rows] = await pool.query(sql, [req.params.code]);
 		if (rows.length === 0) {
 			return res.status(404).json({ message: "Employee not found" });
 		}
-		res.json(rows[0]);
+		res.json(rows);
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}
@@ -34,7 +69,6 @@ router.get("/:code", async (req, res) => {
 // Create a new employee
 router.post("/", async (req, res) => {
 	const {
-		EmployeeCode,
 		FirstName,
 		LastName,
 		BirthDate,
@@ -44,24 +78,28 @@ router.post("/", async (req, res) => {
 		HomeAddressCity,
 		Email,
 		BranchName,
+		Phones,
 	} = req.body;
 	try {
 		const [result] = await pool.query(
-			"INSERT INTO Employee (EmployeeCode, FirstName, LastName, BirthDate, HomeAddressNo, HomeAddressStreet, HomeAddressDistrict, HomeAddressCity, Email, BranchName) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+			`SELECT AddNewEmployee(?, ?, ?, ?, ?, ?, ?, ?, ?, ?) AS EmployeeCode;`,
 			[
-				EmployeeCode,
 				FirstName,
 				LastName,
-				BirthDate,
 				HomeAddressNo,
 				HomeAddressStreet,
 				HomeAddressDistrict,
 				HomeAddressCity,
+				BirthDate,
 				Email,
 				BranchName,
+				Phones,
 			],
 		);
-		res.status(201).json({ id: result.insertId, ...req.body });
+		res.status(201).json({
+			EmployeeCode: result[0].EmployeeCode,
+			...req.body,
+		});
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}
@@ -72,11 +110,11 @@ router.put("/:code", async (req, res) => {
 	const {
 		FirstName,
 		LastName,
-		BirthDate,
 		HomeAddressNo,
 		HomeAddressStreet,
 		HomeAddressDistrict,
 		HomeAddressCity,
+		BirthDate,
 		Email,
 		BranchName,
 	} = req.body;
@@ -86,11 +124,11 @@ router.put("/:code", async (req, res) => {
 			[
 				FirstName,
 				LastName,
-				BirthDate,
 				HomeAddressNo,
 				HomeAddressStreet,
 				HomeAddressDistrict,
 				HomeAddressCity,
+				BirthDate,
 				Email,
 				BranchName,
 				req.params.code,

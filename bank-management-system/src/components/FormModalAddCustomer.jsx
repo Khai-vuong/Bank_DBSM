@@ -47,7 +47,9 @@ function FormModalAddCustomer({ isShowing, toggle }) {
 						transition
 						className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all data-[closed]:translate-y-4 data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in sm:my-8 sm:w-full sm:max-w-3xl data-[closed]:sm:translate-y-0 data-[closed]:sm:scale-95">
 						<div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
-							<form className="space-y-6">
+							<form
+								className="space-y-6"
+								onSubmit={sendData}>
 								<div className="border-b border-gray-900/10 pb-12">
 									<div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
 										<div className="sm:col-span-3">

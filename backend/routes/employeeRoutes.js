@@ -22,6 +22,29 @@ router.get("/", async (req, res) => {
 	}
 });
 
+// Get serve employees
+router.get("/serve", async (req, res) => {
+	try {
+		const sql = `
+			SELECT 
+					CustomerCode,
+					CONCAT(c.FirstName, ' ', c.LastName) AS CustomerName,
+					EmployeeCode,
+					CONCAT(e.FirstName, ' ', e.LastName) AS EmployeeName,
+					BranchName,
+					ServeDate
+			FROM customer c
+			JOIN employee e
+			ON ServeEmployeeCode = EmployeeCode
+		`;
+		console.log(1);
+		const [rows] = await pool.query(sql);
+		res.json(rows);
+	} catch (error) {
+		res.status(500).json({ error: error.message });
+	}
+});
+
 // Get a single employee
 router.get("/:code", async (req, res) => {
 	try {
@@ -46,7 +69,6 @@ router.get("/:code", async (req, res) => {
 // Create a new employee
 router.post("/", async (req, res) => {
 	const {
-		EmployeeCode,
 		FirstName,
 		LastName,
 		BirthDate,
@@ -56,24 +78,28 @@ router.post("/", async (req, res) => {
 		HomeAddressCity,
 		Email,
 		BranchName,
+		Phones,
 	} = req.body;
 	try {
 		const [result] = await pool.query(
-			"INSERT INTO Employee (EmployeeCode, FirstName, LastName, BirthDate, HomeAddressNo, HomeAddressStreet, HomeAddressDistrict, HomeAddressCity, Email, BranchName) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+			`SELECT AddNewEmployee(?, ?, ?, ?, ?, ?, ?, ?, ?, ?) AS EmployeeCode;`,
 			[
-				EmployeeCode,
 				FirstName,
 				LastName,
-				BirthDate,
 				HomeAddressNo,
 				HomeAddressStreet,
 				HomeAddressDistrict,
 				HomeAddressCity,
+				BirthDate,
 				Email,
 				BranchName,
+				Phones,
 			],
 		);
-		res.status(201).json({ id: result.insertId, ...req.body });
+		res.status(201).json({
+			EmployeeCode: result[0].EmployeeCode,
+			...req.body,
+		});
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}
@@ -84,11 +110,11 @@ router.put("/:code", async (req, res) => {
 	const {
 		FirstName,
 		LastName,
-		BirthDate,
 		HomeAddressNo,
 		HomeAddressStreet,
 		HomeAddressDistrict,
 		HomeAddressCity,
+		BirthDate,
 		Email,
 		BranchName,
 	} = req.body;
@@ -98,11 +124,11 @@ router.put("/:code", async (req, res) => {
 			[
 				FirstName,
 				LastName,
-				BirthDate,
 				HomeAddressNo,
 				HomeAddressStreet,
 				HomeAddressDistrict,
 				HomeAddressCity,
+				BirthDate,
 				Email,
 				BranchName,
 				req.params.code,

@@ -74,7 +74,11 @@ router.get("/:code", async (req, res) => {
 	const { code } = req.params;
 
 	let sql = `
-		SELECT c.*, cpn.PhoneNumberList, a.AccountList, CONCAT(e.FirstName, ' ', e.LastName) AS ServeEmployeeName
+		SELECT 
+			c.*, 
+			cpn.PhoneNumberList, 
+			a.AccountList, 
+			CONCAT(e.FirstName, ' ', e.LastName) AS ServeEmployeeName
 		FROM customer AS c
 		LEFT JOIN (
 			SELECT CustomerCode, JSON_ARRAYAGG(PhoneNumber) AS PhoneNumberList
@@ -84,14 +88,16 @@ router.get("/:code", async (req, res) => {
 		LEFT JOIN (
 			SELECT 
 				acc.CustomerCode,
-				JSON_ARRAYAGG(JSON_OBJECT(
+				JSON_ARRAYAGG(
+					JSON_OBJECT(
 						'AccountCode', acc.AccountCode,
 						'AccountNumber', acc.AccountNumber,
 						'AccountType', acc.AccountType,
-						'AccountInformation', AccountInformation
-				)) AS AccountList
+						'AccountInformation', acc_d.AccountInformation
+					)
+				) AS AccountList
 			FROM account AS acc
-			JOIN (
+			LEFT JOIN (
 				SELECT
 					AccountCode,
 					JSON_OBJECT(
@@ -100,7 +106,7 @@ router.get("/:code", async (req, res) => {
 						'LoanTakeDate', LoanTakeDate
 					) AS AccountInformation
 				FROM loanaccount
-				UNION
+				UNION ALL
 				SELECT
 					AccountCode,
 					JSON_OBJECT(
@@ -108,7 +114,7 @@ router.get("/:code", async (req, res) => {
 						'InterestRate', InterestRate
 					) AS AccountInformation
 				FROM savingsaccount
-				UNION
+				UNION ALL
 				SELECT
 					AccountCode,
 					JSON_OBJECT(
@@ -116,19 +122,21 @@ router.get("/:code", async (req, res) => {
 						'OpenDate', OpenDate
 					) AS AccountInformation
 				FROM checkingaccount
-			) AS acc_d
-			ON acc.AccountCode = acc_d.AccountCode
+			) AS acc_d ON acc.AccountCode = acc_d.AccountCode
 			GROUP BY acc.CustomerCode
 		) AS a ON c.CustomerCode = a.CustomerCode
-		JOIN employee AS e ON c.ServeEmployeeCode = e.EmployeeCode
+		LEFT JOIN employee AS e ON c.ServeEmployeeCode = e.EmployeeCode
 		WHERE c.CustomerCode = ?;
-  `;
+	`;
 
 	let params = [code];
 
 	try {
 		const [rows] = await pool.query(sql, params);
-		res.json(rows.map((row) => row));
+		if (rows.length === 0) {
+			return res.status(404).json({ message: "Customer not found" });
+		}
+		res.json(rows[0]);
 	} catch (error) {
 		res.status(500).json({ error: error.message });
 	}

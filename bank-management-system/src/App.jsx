@@ -9,24 +9,31 @@ import {
 import { UserPage } from "./pages/UserPage";
 import { ManagerDashboard } from "./pages/ManagerDashboard";
 import { LoginPage } from "./pages/LoginPage";
+import { useState } from "react";
 
 export default function App() {
+	const [user, setUser] = useState({});
+	const [isAuthenticated, setIsAuthenticated] = useState(false);
 	// For simplicity, we'll use a dummy authentication state
-	const isAuthenticated = true;
-	const userRole = "manager"; // or 'user'
 
 	return (
 		<Router>
 			<Routes>
 				<Route
 					path="/login"
-					element={<LoginPage />}
+					element={
+						<LoginPage
+							setAuth={setIsAuthenticated}
+							setUser={setUser}
+							user={user}
+						/>
+					}
 				/>
 				<Route
 					path="/"
 					element={
 						isAuthenticated ? (
-							userRole === "manager" ? (
+							user.Role === "Manager" ? (
 								<Navigate
 									to="/manager"
 									replace
@@ -48,8 +55,12 @@ export default function App() {
 				<Route
 					path="/user"
 					element={
-						isAuthenticated && userRole === "user" ? (
-							<UserPage />
+						isAuthenticated && user.Role === "Customer" ? (
+							<UserPage
+								setAuth={setIsAuthenticated}
+								setUser={setUser}
+								user={user}
+							/>
 						) : (
 							<Navigate
 								to="/login"
@@ -61,8 +72,12 @@ export default function App() {
 				<Route
 					path="/manager/*"
 					element={
-						isAuthenticated && userRole === "manager" ? (
-							<ManagerDashboard />
+						isAuthenticated && user.Role === "Manager" ? (
+							<ManagerDashboard
+								setAuth={setIsAuthenticated}
+								setUser={setUser}
+								user={user}
+							/>
 						) : (
 							<Navigate
 								to="/login"

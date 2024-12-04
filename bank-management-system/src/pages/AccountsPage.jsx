@@ -1,15 +1,19 @@
 /** @format */
 
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useDataFetching } from "../hooks/useDataFetching";
-import { Loader2 } from "lucide-react";
+import axios from "axios";
 
 export function AccountsPage() {
 	const { data: accounts, loading, error } = useDataFetching("/api/accounts");
+	const navigate = useNavigate();
+	const [deleteMode, setDeleteMode] = useState(false);
 
 	if (loading) {
 		return (
 			<div className="flex justify-center items-center h-full">
-				<Loader2 className="h-8 w-8 animate-spin" />
+				<div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-900"></div>
 			</div>
 		);
 	}
@@ -28,35 +32,92 @@ export function AccountsPage() {
 		);
 	}
 
+	const toggleDeleteMode = () => {
+		setDeleteMode(!deleteMode);
+	};
+
+	const handleDelete = (accountCode) => {
+		if (confirm("Are you sure you want to delete this account?")) {
+			axios.delete(`/api/accounts/${accountCode}`).then(() => {
+				window.location.reload();
+			});
+		}
+		console.log(`Delete account with code: ${accountCode}`);
+	};
+
 	return (
 		<div className="p-6">
-			<h2 className="text-2xl font-bold mb-4">Accounts</h2>
+			<div className="flex justify-between items-center mb-4">
+				<h2 className="text-2xl font-bold">Accounts</h2>
+				<div>
+					<button
+						className={`mr-2 px-4 py-2 rounded ${
+							deleteMode
+								? "bg-red-500 hover:bg-red-600"
+								: "bg-yellow-500 hover:bg-yellow-600"
+						} text-white`}
+						onClick={toggleDeleteMode}>
+						{deleteMode ? "Cancel Delete" : "Delete Mode"}
+					</button>
+					{!deleteMode && (
+						<button
+							className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+							onClick={() => navigate("/manager/accounts/create")}>
+							Add Account
+						</button>
+					)}
+				</div>
+			</div>
 			{accounts && accounts.length > 0 ? (
-				<table className="min-w-full bg-white shadow-md">
-					<thead>
-						<tr>
-							<th className="py-2 px-4 border-b text-left">Account Number</th>
-							<th className="py-2 px-4 border-b text-left">Customer Code</th>
-							<th className="py-2 px-4 border-b text-left">Account Type</th>
-						</tr>
-					</thead>
-					<tbody>
-						{accounts.map((account) => (
-							<tr
-								key={account.AccountNumber}
-								className="hover:bg-gray-100 hover:cursor-pointer"
-								onClick={() =>
-									(window.location.href = `/manager/accounts/${account.AccountType.toLowerCase()}/${
-										account.AccountCode
-									}`)
-								}>
-								<td className="py-2 px-4 border-b">{account.AccountNumber}</td>
-								<td className="py-2 px-4 border-b">{account.CustomerCode}</td>
-								<td className="py-2 px-4 border-b">{account.AccountType}</td>
+				<div className="overflow-x-auto">
+					<table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
+						<thead className="bg-gray-100">
+							<tr>
+								<th className="py-3 px-4 text-left">Account Code</th>
+								<th className="py-3 px-4 text-left">Account Number</th>
+								<th className="py-3 px-4 text-left">Customer Code</th>
+								<th className="py-3 px-4 text-left">Account Type</th>
+								{deleteMode && <th className="py-3 px-4">Action</th>}
 							</tr>
-						))}
-					</tbody>
-				</table>
+						</thead>
+						<tbody>
+							{accounts.map((account) => (
+								<tr
+									key={account.AccountNumber}
+									className={`hover:bg-gray-50 ${
+										deleteMode ? "" : "hover:cursor-pointer"
+									}`}
+									onClick={
+										deleteMode
+											? undefined
+											: () =>
+													(window.location.href = `/manager/accounts/${account.AccountType.toLowerCase()}/${
+														account.AccountCode
+													}`)
+									}>
+									<td className="py-3 px-4 border-b">{account.AccountCode}</td>
+									<td className="py-3 px-4 border-b">
+										{account.AccountNumber}
+									</td>
+									<td className="py-3 px-4 border-b">{account.CustomerCode}</td>
+									<td className="py-3 px-4 border-b">{account.AccountType}</td>
+									{deleteMode && (
+										<td className=" border-b text-center">
+											<button
+												className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded"
+												onClick={(e) => {
+													e.stopPropagation();
+													handleDelete(account.AccountCode);
+												}}>
+												Delete
+											</button>
+										</td>
+									)}
+								</tr>
+							))}
+						</tbody>
+					</table>
+				</div>
 			) : (
 				<p>No accounts found.</p>
 			)}

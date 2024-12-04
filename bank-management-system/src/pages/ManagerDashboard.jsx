@@ -1,6 +1,7 @@
 /** @format */
 
 import { Navigate, Route, Routes } from "react-router-dom";
+import PropTypes from "prop-types";
 import { AppSidebar } from "../components/AppSidebar";
 import { BranchesPage } from "./BranchesPage";
 import { AccountsPage } from "./AccountsPage";
@@ -9,11 +10,18 @@ import { CustomersPage } from "./CustomersPage";
 import { CustomerDetailPage } from "./CustomerDetailPage";
 import { EmployeesPage } from "./EmployeesPage";
 import { EmployeeDetailPage } from "./EmployeeDetailPage";
+import { CreateAccountPage } from "./CreateAccountPage";
+import { CreateCustomerPage } from "./CreateCustomerPage";
+import { CreateEmployeePage } from "./CreateEmployeePage";
+import { EmployeeServePage } from "./EmployeeServePage";
 
-export function ManagerDashboard() {
+export function ManagerDashboard({ setAuth, setUser }) {
 	return (
 		<div className="flex h-screen bg-gray-100">
-			<AppSidebar />
+			<AppSidebar
+				setAuth={setAuth}
+				setUser={setUser}
+			/>
 			<main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100">
 				<Routes>
 					<Route
@@ -34,8 +42,12 @@ export function ManagerDashboard() {
 						element={<AccountsPage />}
 					/>
 					<Route
-						path="accounts/:type/:number"
+						path="accounts/:type/:code"
 						element={<AccountDetailPage />}
+					/>
+					<Route
+						path="accounts/create"
+						element={<CreateAccountPage />}
 					/>
 					<Route
 						path="customers"
@@ -46,6 +58,10 @@ export function ManagerDashboard() {
 						element={<CustomerDetailPage />}
 					/>
 					<Route
+						path="customers/create"
+						element={<CreateCustomerPage />}
+					/>
+					<Route
 						path="employees"
 						element={<EmployeesPage />}
 					/>
@@ -53,8 +69,21 @@ export function ManagerDashboard() {
 						path="employees/:code"
 						element={<EmployeeDetailPage />}
 					/>
+					<Route
+						path="employees/create"
+						element={<CreateEmployeePage />}
+					/>
+					<Route
+						path="employees/serve"
+						element={<EmployeeServePage />}
+					/>
 				</Routes>
 			</main>
 		</div>
 	);
 }
+
+ManagerDashboard.propTypes = {
+	setAuth: PropTypes.func.isRequired,
+	setUser: PropTypes.func.isRequired,
+};

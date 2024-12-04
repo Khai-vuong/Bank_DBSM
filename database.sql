@@ -11,14 +11,30 @@ CREATE TABLE Customer
     LastName					VARCHAR(30)					NOT NULL,
     HomeAddress					VARCHAR(255)				NOT NULL,
     OfficeAddress				VARCHAR(255),
-    Email						VARCHAR(100)	UNIQUE 		NOT NULL,
+    Email						VARCHAR(100)	 			NOT NULL UNIQUE CHECK (email REGEXP '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}$'),
     ServeEmployeeCode			VARCHAR(10),
     ServeDate					DATE
 );
 
+DELIMITER //
+CREATE TRIGGER served_date
+BEFORE INSERT ON Customer
+FOR EACH ROW
+BEGIN
+    IF NEW.ServeDate IS NULL THEN
+        SET NEW.ServeDate = CURDATE();
+    END IF;
+
+    IF NEW.ServeDate > CURDATE() THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'Ngày phục vụ không thể lớn hơn ngày hiện tại.';
+    END IF;
+END; //
+DELIMITER ;
+
 CREATE TABLE CustomerPhoneNumber
 (
-	PhoneNumber					VARCHAR(20)					NOT NULL,
+	PhoneNumber					VARCHAR(20)					NOT NULL CHECK (LENGTH(PhoneNumber) > 0 AND LENGTH(phoneNumber) <= 11 AND (PhoneNumber REGEXP '^[0-9]+$')),
     CustomerCode				VARCHAR(10),
     PRIMARY KEY (PhoneNumber, CustomerCode),
     FOREIGN KEY (CustomerCode) REFERENCES Customer(CustomerCode) ON DELETE CASCADE
@@ -31,27 +47,62 @@ CREATE TABLE Account
 	AccountNumber				CHAR(10)								UNIQUE,
     CustomerCode				VARCHAR(10),
     AccountType					ENUM('Checking', 'Savings', 'Loan')		NOT NULL,
-    FOREIGN KEY (CustomerCode) REFERENCES Customer(CustomerCode)
+    FOREIGN KEY (CustomerCode) REFERENCES Customer(CustomerCode),
+    CONSTRAINT check_type CHECK (AccountType IN ('Checking', 'Savings', 'Loan' ))
 );
 
 -- Savings Account
 CREATE TABLE SavingsAccount
 (
 	AccountCode				    VARCHAR(10)					PRIMARY KEY,
-    InterestRate				DECIMAL(5, 2)				NOT NULL,
-    Balance						DECIMAL(15, 2)				NOT NULL,
+    InterestRate				DECIMAL(5, 2)				NOT NULL CHECK (InterestRate >= 0),
+    Balance						DECIMAL(15, 2)				NOT NULL CHECK (Balance >= 0),
     OpenDate					DATE 						NOT NULL,
-    FOREIGN KEY (AccountCode) REFERENCES Account(AccountCode)
+    FOREIGN KEY (AccountCode) REFERENCES Account(AccountCode) ON DELETE CASCADE
 );
+
+DELIMITER //
+CREATE TRIGGER savingsaccount_open_date
+BEFORE INSERT ON SavingsAccount
+FOR EACH ROW
+BEGIN
+    IF NEW.OpenDate IS NULL THEN
+        SET NEW.openDate = CURDATE();
+    END IF;
+
+    IF NEW.OpenDate > CURDATE() THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'Ngày tạo tài khoản không thể lớn hơn ngày hiện tại.';
+    END IF;
+END;
+//
+DELIMITER ;
 
 -- Checking Account
 CREATE TABLE CheckingAccount
 (
 	AccountCode				    VARCHAR(10)					PRIMARY KEY,
-    Balance						DECIMAL(15, 2)				NOT NULL,
+    Balance						DECIMAL(15, 2)				NOT NULL CHECK (Balance >= 0),
     OpenDate					DATE 						NOT NULL,
-    FOREIGN KEY (AccountCode) REFERENCES Account(AccountCode)
+    FOREIGN KEY (AccountCode) REFERENCES Account(AccountCode) ON DELETE CASCADE
 );
+
+DELIMITER //
+CREATE TRIGGER checkingaccount_open_date
+BEFORE INSERT ON CheckingAccount
+FOR EACH ROW
+BEGIN
+    IF NEW.OpenDate IS NULL THEN
+        SET NEW.openDate = CURDATE();
+    END IF;
+
+    IF NEW.OpenDate > CURDATE() THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'Ngày tạo tài khoản không thể lớn hơn ngày hiện tại.';
+    END IF;
+END;
+//
+DELIMITER ;
 
 -- Loan Account
 CREATE TABLE LoanAccount
@@ -59,9 +110,26 @@ CREATE TABLE LoanAccount
 	AccountCode				    VARCHAR(10)					PRIMARY KEY,
     LoanTakeDate				DATE 						NOT NULL,
     BalanceDue					DECIMAL(15, 2)				NOT NULL,
-    InterestRate				DECIMAL(5, 2)				NOT NULL,
-    FOREIGN KEY (AccountCode) REFERENCES Account(AccountCode)    
+    InterestRate				DECIMAL(5, 2)				NOT NULL CHECK (InterestRate >= 0),
+    FOREIGN KEY (AccountCode) REFERENCES Account(AccountCode) ON DELETE CASCADE
 );
+
+DELIMITER //
+CREATE TRIGGER account_loan_taken_date
+BEFORE INSERT ON LoanAccount
+FOR EACH ROW
+BEGIN
+	IF NEW.LoanTakeDate IS NULL THEN
+        SET NEW.LoanTakeDate = CURDATE();
+    END IF;
+
+    IF NEW.LoanTakeDate > CURDATE() THEN
+        SIGNAL SQLSTATE '45000' 
+        SET MESSAGE_TEXT = 'Ngày nhận khoản vay không thể lớn hơn ngày hiện tại.';
+    END IF;
+END;
+//
+DELIMITER ;
 
 -- Tạm thời tắt kiểm tra khóa ngoại
 SET FOREIGN_KEY_CHECKS = 0;
@@ -75,7 +143,7 @@ CREATE TABLE Branch
     AddressDistrict 			VARCHAR(255) 				NOT NULL, 
     AddressCity 				VARCHAR(255) 				NOT NULL, 
     AddressRegion 				VARCHAR(255) 				NOT NULL,
-    Email						VARCHAR(100)				NOT NULL,
+    Email						VARCHAR(100)				NOT NULL UNIQUE CHECK (email REGEXP '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}$'),
     ManagerCode					VARCHAR(10)					NOT NULL
 ); 
 
@@ -90,10 +158,40 @@ CREATE TABLE Employee
     HomeAddressStreet 			VARCHAR(100) 				NOT NULL, 
     HomeAddressDistrict 		VARCHAR(100) 				NOT NULL, 
     HomeAddressCity 			VARCHAR(100) 				NOT NULL,
-    Email						VARCHAR(100)				NOT NULL,
+    Email						VARCHAR(100)				NOT NULL UNIQUE CHECK (email REGEXP '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}$'),
     BranchName					VARCHAR(100)				NOT NULL,
     FOREIGN KEY (BranchName) REFERENCES Branch(BranchName)
 );
+
+DELIMITER //
+CREATE TRIGGER emp_age_insert
+BEFORE INSERT ON Employee
+FOR EACH ROW
+BEGIN
+	IF (DATEDIFF(CURDATE(), NEW.BirthDate) < 6574) THEN
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Nhân viên phải từ 18 tuổi trở lên';
+    END IF;
+END; //
+
+CREATE TRIGGER emp_age_update
+BEFORE INSERT ON Employee
+FOR EACH ROW
+BEGIN
+	IF (DATEDIFF(CURDATE(), NEW.BirthDate) < 6574) THEN
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Nhân viên phải từ 18 tuổi trở lên';
+    END IF;
+END; //
+
+CREATE TRIGGER check_date
+BEFORE INSERT ON Employee
+FOR EACH ROW
+BEGIN
+	IF NEW.BirthDate > CURDATE() THEN
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Ngày sinh không thể lớn hơn ngày hiện tại';
+	END IF;
+END; //
+
+DELIMITER ;
 
 ALTER TABLE Customer
 ADD CONSTRAINT FK_Serve_Customer FOREIGN KEY (ServeEmployeeCode) REFERENCES Employee(EmployeeCode);
@@ -104,25 +202,25 @@ ADD CONSTRAINT FK_Branch_Employee FOREIGN KEY (ManagerCode) REFERENCES Employee(
 CREATE TABLE BranchPhone
 (
 	BranchName					VARCHAR(100)				NOT NULL,
-    PhoneNumber					CHAR(10)					NOT NULL,
+    PhoneNumber					CHAR(11)					NOT NULL CHECK (LENGTH(PhoneNumber) > 0 AND LENGTH(phoneNumber) <= 11 AND (PhoneNumber REGEXP '^[0-9]+$')),
     PRIMARY KEY (BranchName, PhoneNumber),
-    FOREIGN KEY (BranchName) REFERENCES Branch(BranchName)
+    FOREIGN KEY (BranchName) REFERENCES Branch(BranchName) ON DELETE CASCADE
 );
 
 CREATE TABLE BranchFax
 (
-	BranchName					VARCHAR(100)				NOT NULL,
-    FaxNumber					CHAR(10)					NOT NULL,
+	BranchName					VARCHAR(100)				NOT NULL ,
+    FaxNumber					CHAR(11)					NOT NULL CHECK (LENGTH(FaxNumber) > 0 AND LENGTH(FaxNumber) <= 11 AND (FaxNumber REGEXP '^[0-9]+$')),
 	PRIMARY KEY (BranchName, FaxNumber),
-    FOREIGN KEY (BranchName) REFERENCES Branch(BranchName)
+    FOREIGN KEY (BranchName) REFERENCES Branch(BranchName) ON DELETE CASCADE
 );
 
 CREATE TABLE EmployeePhone
 (
 	EmployeeCode				VARCHAR(10)					NOT NULL,
-    PhoneNumber					CHAR(10)					NOT NULL,
+    PhoneNumber					CHAR(11)					NOT NULL CHECK (LENGTH(PhoneNumber) > 0 AND LENGTH(phoneNumber) <= 11 AND (PhoneNumber REGEXP '^[0-9]+$')),
 	PRIMARY KEY (EmployeeCode, PhoneNumber),
-    FOREIGN KEY (EmployeeCode) REFERENCES Employee(EmployeeCode)
+    FOREIGN KEY (EmployeeCode) REFERENCES Employee(EmployeeCode) ON DELETE CASCADE
 );
 
 SET FOREIGN_KEY_CHECKS = 1;

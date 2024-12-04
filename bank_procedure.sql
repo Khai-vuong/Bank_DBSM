@@ -1,6 +1,6 @@
 USE bank_database;
 
-DELIMITER $
+DELIMITER $$
 -- Register user
 DROP PROCEDURE IF EXISTS RegisterUser;
 CREATE PROCEDURE RegisterUser(
@@ -31,10 +31,8 @@ BEGIN
         p_Role, 
         IF(p_Role = 'Manager', NULL, p_CustomerCode) -- CustomerCode is NULL for Managers
     );
-END$
-DELIMITER ;
+END; $$
 
-DELIMITER $
 -- Login
 DROP FUNCTION IF EXISTS LoginUser;
 CREATE FUNCTION LoginUser(
@@ -49,21 +47,19 @@ BEGIN
 
     -- Verify credentials and construct a JSON-like string
     SELECT JSON_OBJECT(
-        'userId', UserID,
-        'username', Username,
-        'role', Role,
-        'customerCode', IFNULL(CustomerCode, 'NULL')
+        'UserCode', UserCode,
+        'UserName', Username,
+        'Role', Role,
+        'CustomerCode', IFNULL(CustomerCode, 'NULL')
     )
     INTO user_info
     FROM User
-    WHERE Username = p_Username AND PasswordHash = SHA2(p_Password, 256);
+    WHERE Username = p_Username AND PasswordHash = p_Password;
 
     -- Return user information or a JSON-like error message
     RETURN COALESCE(user_info, JSON_OBJECT('error', 'Invalid username or password'));
-END$
-DELIMITER ;
+END; $$
 
-DELIMITER $
 -- generate new customer code
 DROP FUNCTION IF EXISTS GenerateCustomerCode;
 CREATE FUNCTION GenerateCustomerCode()
@@ -82,12 +78,50 @@ BEGIN
     SET new_code = CONCAT('C', LPAD(max_code + 1, 3, '0'));
 
     RETURN new_code;
-END$
-DELIMITER ;
+END; $$
 
-DELIMITER $
+-- generate new customer code
+DROP FUNCTION IF EXISTS GenerateAccountCode;
+CREATE FUNCTION GenerateAccountCode()
+RETURNS VARCHAR(10)
+DETERMINISTIC
+READS SQL DATA
+BEGIN
+    DECLARE new_code VARCHAR(10);
+    DECLARE max_code INT;
+
+    -- Extract the maximum numerical part of the existing CustomerCode
+    SELECT IFNULL(MAX(CAST(SUBSTRING(AccountCode, 2) AS UNSIGNED)), 0) INTO max_code
+    FROM Account;
+
+    -- Increment the maximum code by 1 and format it as 'CXXX'
+    SET new_code = CONCAT('A', LPAD(max_code + 1, 3, '0'));
+
+    RETURN new_code;
+END; $$
+
+-- generate new customer code
+DROP FUNCTION IF EXISTS GenerateEmployeeCode;
+CREATE FUNCTION GenerateEmployeeCode()
+RETURNS VARCHAR(10)
+DETERMINISTIC
+READS SQL DATA
+BEGIN
+    DECLARE new_code VARCHAR(10);
+    DECLARE max_code INT;
+
+    -- Extract the maximum numerical part of the existing CustomerCode
+    SELECT IFNULL(MAX(CAST(SUBSTRING(EmployeeCode, 2) AS UNSIGNED)), 0) INTO max_code
+    FROM Employee;
+
+    -- Increment the maximum code by 1 and format it as 'CXXX'
+    SET new_code = CONCAT('E', LPAD(max_code + 1, 3, '0'));
+
+    RETURN new_code;
+END; $$
+
 -- Create new customer
-DROP PROCEDURE IF EXISTS AddCustome;
+DROP PROCEDURE IF EXISTS AddCustomer;
 CREATE PROCEDURE AddCustomer(
     IN p_FirstName VARCHAR(30),
     IN p_LastName VARCHAR(30),
@@ -129,42 +163,84 @@ BEGIN
 
     -- Return a success message
     SELECT CONCAT('New customer added with CustomerCode: ', newCustomerCode) AS Message;
-END$
-DELIMITER ;
+END; $$
 
-DELIMITER $
 -- Function to create account
-DROP PROCEDURE IF EXISTS AddNewAccount;
-CREATE PROCEDURE AddNewAccount(
-    IN account_number CHAR(10),
-    IN customer_code VARCHAR(10),
-    IN account_type ENUM('Savings', 'Checking', 'Loan'),
-    IN balance DECIMAL(15, 2),
-    IN interest_rate DECIMAL(5, 2),
-    IN open_date DATE,
-    IN loan_take_date DATE
-)
+DROP FUNCTION IF EXISTS AddNewAccount;
+CREATE FUNCTION AddNewAccount(
+    account_number CHAR(10),
+    customer_code VARCHAR(10),
+    account_type ENUM('Savings', 'Checking', 'Loan')
+) RETURNS VARCHAR(10)
+DETERMINISTIC
 BEGIN
-    -- Add the account to the main Account table
-    INSERT INTO Account (AccountNumber, CustomerCode, AccountType)
-    VALUES (account_number, customer_code, account_type);
+    DECLARE newAccountCode VARCHAR(10);
+    -- Generate a new account code using a hypothetical function GenerateAccountCode
+    SET newAccountCode = GenerateAccountCode();
+    
+    -- Insert the new account into the Account table
+    INSERT INTO Account (AccountCode, AccountNumber, CustomerCode, AccountType)
+    VALUES (newAccountCode, account_number, customer_code, account_type);
+    
+    CASE account_type
+		WHEN 'Savings' THEN
+			INSERT INTO SavingsAccount (AccountCode, InterestRate, Balance, OpenDate)
+            VALUES (newAccountCode, 0.0, 0.0, CURDATE());
+		WHEN 'Checking' THEN
+			INSERT INTO CheckingAccount (AccountCode, Balance, OpenDate)
+            VALUES (newAccountCode, 0.0, CURDATE());
+		WHEN 'Loan' THEN
+			INSERT INTO LoanAccount (AccountCode, InterestRate, BalanceDue, LoanTakeDate)
+            VALUES (newAccountCode, 0.0, 0.0, CURDATE());
+	END CASE;
+    
+    -- Return the new account code
+    RETURN newAccountCode;
+END; $$
 
-    -- Insert details into the respective account-specific table
-    CASE 
-        WHEN account_type = 'Savings' THEN
-            INSERT INTO SavingsAccount (AccountNumber, InterestRate, Balance, OpenDate)
-            VALUES (account_number, interest_rate, balance, open_date);
-        WHEN account_type = 'Checking' THEN
-            INSERT INTO CheckingAccount (AccountNumber, Balance, OpenDate)
-            VALUES (account_number, balance, open_date);
-        WHEN account_type = 'Loan' THEN
-            INSERT INTO LoanAccount (AccountNumber, LoanTakeDate, BalanceDue, InterestRate)
-            VALUES (account_number, loan_take_date, balance, interest_rate);
-    END CASE;
-END$
-DELIMITER ;
+DROP FUNCTION IF EXISTS AddNewEmployee;
+CREATE FUNCTION AddNewEmployee(
+	p_FirstName VARCHAR(30),
+	p_LastName VARCHAR(30),
+	p_HomeAddressNo VARCHAR(10),
+    p_HomeAddressStreet VARCHAR(100),
+    p_HomeAddressDistrict VARCHAR(100),
+    p_HomeAddressCity VARCHAR(100),
+    p_BirthDate DATE,
+	p_Email VARCHAR(100),
+    p_BranchName VARCHAR(100),
+	p_Phones TEXT
+) RETURNS VARCHAR(10)
+DETERMINISTIC
+BEGIN
+    DECLARE newEmployeeCode VARCHAR(10);
+	DECLARE phone VARCHAR(20);
+    DECLARE pos INT;
+    -- Generate a new Customer code using a hypothetical function GenerateCustomerCode
+    SET newEmployeeCode = GenerateEmployeeCode();
+    
+    INSERT INTO Employee (EmployeeCode, FirstName, LastName, HomeAddressNo, HomeAddressStreet, HomeAddressDistrict, HomeAddressCity, BirthDate, Email, BranchName)
+    VALUES (newEmployeeCode, p_FirstName, p_LastName, p_HomeAddressNo, p_HomeAddressStreet, p_HomeAddressDistrict, p_HomeAddressCity, p_BirthDate, p_Email, p_BranchName);
+    
+    WHILE LENGTH(p_Phones) > 0 DO
+        SET pos = LOCATE(',', p_Phones);
 
-DELIMITER $
+        -- Extract the phone number
+        IF pos = 0 THEN
+            SET phone = p_Phones;
+            SET p_Phones = '';
+        ELSE
+            SET phone = SUBSTRING(p_Phones, 1, pos - 1);
+            SET p_Phones = SUBSTRING(p_Phones, pos + 1);
+        END IF;
+
+		INSERT INTO EmployeePhone (PhoneNumber, EmployeeCode)
+		VALUES (phone, newEmployeeCode);
+    END WHILE;
+    
+    RETURN newEmployeeCode;
+END; $$
+
 -- Function to Calculate Total Balance for Each Account Type of a Customer
 DROP FUNCTION IF EXISTS CalculateTotalBalanceByCustomer;
 CREATE FUNCTION CalculateTotalBalanceByCustomer(customer_id VARCHAR(10))
@@ -209,10 +285,8 @@ BEGIN
         'checking', total_checking,
         'loan', total_loan
     );
-END$
-DELIMITER ;
+END; $$
 
-DELIMITER $
 -- Procedure to Sort Employees by Decreasing Number of Customers They Serve in a Period
 DROP PROCEDURE IF EXISTS SortEmployeesByCustomers;
 CREATE PROCEDURE SortEmployeesByCustomers(
@@ -251,5 +325,5 @@ BEGIN
         e.EmployeeCode
     ORDER BY 
         CustomerCount DESC;
-END$
+END; $$
 DELIMITER ;

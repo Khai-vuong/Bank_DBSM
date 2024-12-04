@@ -12,6 +12,14 @@ export function EmployeeDetailPage() {
 		error,
 	} = useDataFetching(`/api/employees/${params.code}`);
 
+	const employeeDetail = {
+		...employee[0],
+		PhoneNumber: employee.map((item) => item.PhoneNumber),
+	};
+
+	const formattedDate = (isoDate) =>
+		new Date(isoDate).toLocaleDateString("en-GB");
+
 	if (loading) {
 		return (
 			<div className="flex justify-center items-center h-full p-6">
@@ -33,16 +41,6 @@ export function EmployeeDetailPage() {
 			</div>
 		);
 	}
-
-	const employeeDetail = {
-		...employee[0],
-		PhoneNumber: employee.map((item) => item.PhoneNumber),
-	};
-
-	console.log(employeeDetail);
-
-	const formattedDate = (isoDate) =>
-		new Date(isoDate).toLocaleDateString("en-GB");
 
 	return (
 		<>
